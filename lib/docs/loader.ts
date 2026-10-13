@@ -22,5 +22,4 @@ export const DOC_IMPORTERS: Record<string, DocImporter> = {
   "fno-guides/preprod/requirements": () => import("@/content/docs/fno-guides/preprod/requirements.md"),
   "fno-guides/preprod/run-validator": () => import("@/content/docs/fno-guides/preprod/run-validator.md"),
   "": () => import("@/content/docs/index.md"),
-  "processes/change-management": () => import("@/content/docs/processes/change-management.md"),
 };

@@ -95,15 +95,6 @@ export const DOCS_MANIFEST: DocNode[] = [
     ]
   },
   {
-    "title": "Processes",
-    "children": [
-      {
-        "title": "Change Management",
-        "slug": "processes/change-management"
-      }
-    ]
-  },
-  {
     "title": "Architecture Decision Records",
     "children": [
       {

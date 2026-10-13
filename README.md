@@ -36,7 +36,7 @@ The app is a Next.js App Router project with no server-side state — it deploys
 | `/reports` | Report builder: snapshot the current network state into Markdown, **plain text (Notifi-safe)**, JSON, or CSV. Toggle sections, then copy to clipboard, download, or print. |
 | `/diagnostic` | Guided incident diagnostic tree (carried over from v0.1). |
 | `/runbooks` | Runbook index + rendered runbook pages (wired up in 2.0 — these were dead stubs in v0.1). |
-| `/docs` | Operator documentation (FNO guides, architecture, processes, ADRs, FAQ), maintained in this repo and rendered natively in the dashboard theme. See [Documentation](#documentation). |
+| `/docs` | Operator documentation (FNO guides, architecture, ADRs, FAQ), maintained in this repo and rendered natively in the dashboard theme. See [Documentation](#documentation). |
 | `/roadmap` | Product roadmap: hand-maintained directional workstreams for Nighthawk itself (Cardano availability, non-db-sync topology, SOC-2 assurance templates, fork watching, network agents, governance monitoring). Intentions, not dated commitments. |
 
 Theme toggle (dark/light) lives in the nav. Dark is the brand default; the choice persists in `localStorage` and respects the OS preference until you choose explicitly.
