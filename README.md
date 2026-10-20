@@ -2,7 +2,7 @@
 
 General observability dashboard for the core Midnight blockchain network and its FNO validators. Version 2.0 is a ground-up rework of the `po_dash_0.1` prototype with four headline additions: **validator attestation tracking**, **report generation**, **Discord webhook alerting**, and **dark/light theming** — on a modular architecture with strict separation of concerns.
 
-Data source: the public Substrate telemetry feed at `wss://telemetry.shielded.tools/feed/` (Mainnet, Preprod, Preview). Everything runs client-side in the browser; there is no backend, database, or API key.
+Data source: the public Substrate telemetry feed at `wss://telemetry.shielded.tools/feed/` (Mainnet, Preprod, Preview), plus one cached Blockfrost call for Cardano epoch context on the homepage. Everything runs client-side in the browser; there is no backend or database. The Blockfrost project id (`BLOCKFROST_API_MAINNET`, set via `.env` locally and an Actions secret for Pages) is inlined into the static bundle — public by design, read-only, and budgeted to ~40k of the 50k free monthly requests by a 15-minute cache.
 
 ---
 
@@ -31,7 +31,8 @@ The app is a Next.js App Router project with no server-side state — it deploys
 
 | Route | What it does |
 |-------|--------------|
-| `/dashboard` | Real-time network health: best/finalized block, finality gap, block time, alerts with runbook links, and per-node tables (validators, gateways, boot nodes) with a detail drawer. |
+| `/` | Homepage: Midnight and Cardano epochs side by side (Midnight derived from the live feed, Cardano via Blockfrost), live validator/finality/block-time stats, quick links. |
+| `/dashboard` | Real-time network health: best/finalized block, finality gap, block time, alerts with runbook links, and per-node card grids (validators, gateways, boot nodes) with click-to-expand details. |
 | `/attestation` | Per-validator attestation: block authorship counts and share vs the expected round-robin share, finality lag, block propagation, uptime, connection flaps, and a composite 0–100 score. Includes a live feed of recently authored blocks. |
 | `/reports` | Report builder: snapshot the current network state into Markdown, **plain text (Notifi-safe)**, JSON, or CSV. Toggle sections, then copy to clipboard, download, or print. |
 | `/diagnostic` | Guided incident diagnostic tree (carried over from v0.1). |

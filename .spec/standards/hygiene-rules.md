@@ -10,7 +10,7 @@ pnpm build    # next build — also runs the TypeScript typecheck
 ```
 
 - A change that doesn't compile or introduces a lint **error** is not done.
-- **Known accepted warning:** `@next/next/no-img-element` on the brand logo in `components/layout/SiteNav.tsx`. Don't let *new* warnings pile up; if you touch that area and can cleanly switch to `next/image`, do — otherwise leave it.
+- **The nav brand mark is pure SVG** (`components/ui/NighthawkWordmark.tsx` + the eye `ThemeToggle`) — no `<img>` elements, so no `@next/next/no-img-element` warnings to accept. Keep new chrome SVG/stroke-based rather than image assets.
 
 > **There is no `pnpm test`.** Do not run or reference it. If asked to "add tests," first wire a runner (see below) — don't fabricate a passing test step.
 
@@ -34,4 +34,3 @@ For anything visual or telemetry-driven, a clean build isn't proof it *works*. R
 
 - [ ] **No automated test runner.** `lib/` is pure and designed for unit tests, but none are wired. To add: prefer **Vitest** (fast, ESM/TS-native), put specs next to modules as `*.test.ts`, add a `test` script, and update `../../CLAUDE.md` Operational Commands + this file when it lands.
 - [ ] No CI workflow. Lint/build are run locally.
-- [ ] `next/image` migration for the nav logo (low priority).

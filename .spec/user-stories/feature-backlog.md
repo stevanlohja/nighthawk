@@ -5,6 +5,7 @@ Single list of capability areas: what's shipped (the contract the app must keep 
 ## ✅ Shipped (must keep working)
 
 - [x] **Network health** (`/dashboard`) — see `epic-01-network-health.md`.
+- [x] **Cardano partner-chain epoch** (homepage) — Midnight + Cardano epoch cards side by side (the old hero animation was removed). Midnight's epoch is derived from block height (300-slot AURA epochs); Cardano's comes from Blockfrost `GET /blocks/latest` with a 15-minute `localStorage` cache (budget: ~40k of the 50k free req/mo; failures never retry within a session). Key: `BLOCKFROST_API_MAINNET` — `.env` locally, GitHub Actions secret for Pages; inlined into the static bundle, public by design, read-only.
 - [x] **Validator attestation** (`/attestation`) — authorship share vs expected round-robin, finality lag, propagation, uptime, disconnect flaps, composite 0–100 score. Methodology caveat shown (first-report heuristic, session-scoped).
 - [x] **Report builder** (`/reports`) — frozen `ReportModel` → Markdown / **Notifi-safe plain text** / JSON / CSV; copy/download/print.
 - [x] **Discord alerting** (nav bell) — browser → webhook, edge-triggered, dedup/escalation/recovery, role-mention guardrails. Config in `localStorage`.

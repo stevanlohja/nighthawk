@@ -5,7 +5,9 @@
  * commitments. It is deliberately not telemetry and not a calendar (see the
  * OUT-of-scope guardrails in ../project-purpose.md) — nothing here is measured,
  * projected, or dated. Keep statuses honest: flip an item to "in-flight" only
- * when work has actually started.
+ * when work has actually started, and to "delivered" only when what actually
+ * shipped matches the summary — trim the summary to what shipped and move the
+ * unshipped remainder to the rationale; never claim scope that isn't live.
  */
 
 export type RoadmapArea =
@@ -15,7 +17,7 @@ export type RoadmapArea =
   | "Automation"
   | "Governance";
 
-export type RoadmapStatus = "planned" | "in-flight";
+export type RoadmapStatus = "planned" | "in-flight" | "delivered";
 
 export interface RoadmapItem {
   id: string;
@@ -34,10 +36,12 @@ export const PRODUCT_ROADMAP: RoadmapItem[] = [
     id: "cardano-availability",
     codename: "AEGIS",
     area: "Observability",
-    status: "planned",
+    status: "delivered",
     title: "Cardano availability",
     summary:
-      "Extend the availability domain past the Midnight validator set to the Cardano surface the partner chain depends on — pool and relay liveness, block-production continuity, and availability reporting an operator can hand to a counterpart.",
+      "Cardano context is live on the homepage: epoch and in-epoch progress beside Midnight's, fed by a single budget-cached Blockfrost call (GET /blocks/latest, 15-minute localStorage TTL — ~40k of the 50k free requests/month reserved). Read-only key, public by design — the dashboard stays a static client-side app.",
+    rationale:
+      "First increment of the wider availability domain: pool and relay liveness, block-production continuity, and availability reporting an operator can hand to a counterpart are the natural next phases.",
   },
   {
     id: "non-dbsync-topology",

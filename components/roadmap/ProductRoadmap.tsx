@@ -4,6 +4,7 @@ import { PRODUCT_ROADMAP, RoadmapStatus } from "@/lib/roadmap/product-roadmap";
 const STATUS: Record<RoadmapStatus, { label: string; cls: string }> = {
   planned: { label: "Planned", cls: "text-mn-muted border-mn-border" },
   "in-flight": { label: "In flight", cls: "text-mn-accent border-mn-accent/40" },
+  delivered: { label: "Delivered", cls: "text-mn-ok border-mn-ok/40" },
 };
 
 /**
@@ -20,7 +21,9 @@ export default function ProductRoadmap() {
           return (
             <article
               key={item.id}
-              className="bg-mn-surface border border-mn-border rounded-2xl p-5 flex flex-col gap-3"
+              className={`bg-mn-surface border rounded-2xl p-5 flex flex-col gap-3 ${
+                item.status === "delivered" ? "border-mn-ok/30" : "border-mn-border"
+              }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-display text-[11px] font-semibold uppercase tracking-[0.3em] text-mn-accent">
@@ -45,7 +48,7 @@ export default function ProductRoadmap() {
       <p className="text-[11px] text-mn-muted leading-relaxed">
         This page is curated by hand: workstreams are intentions, not dated commitments, and
         nothing here is measured or projected by the dashboard. A status flips only when work
-        actually starts.
+        actually starts — and only to Delivered once what shipped matches what is written here.
       </p>
     </>
   );

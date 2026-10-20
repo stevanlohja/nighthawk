@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Nighthawk brand mark — angular delta-wing inside HUD targeting brackets.
- * Uses `currentColor` so it follows the surrounding text token (theme-aware,
- * no invert hacks). Pure SVG, no image asset to keep in sync.
+ * Nighthawk brand mark — a watchful eye outline (the hawk's eye on the
+ * network). Uses `currentColor` so it follows the surrounding text token
+ * (theme-aware, no invert hacks). Pure SVG, no image asset to keep in sync.
  */
 export function NighthawkSymbol({ className = "" }: { className?: string }) {
   return (
@@ -12,14 +12,16 @@ export function NighthawkSymbol({ className = "" }: { className?: string }) {
       fill="none"
       stroke="currentColor"
       strokeWidth={1.6}
-      strokeLinecap="square"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
       className={className}
     >
-      {/* Targeting brackets */}
-      <path d="M3 8.5V3h5.5M15.5 3H21v5.5M21 15.5V21h-5.5M8.5 21H3v-5.5" />
-      {/* Delta wing — the hawk in a dive */}
-      <path d="M12 5.6 19.2 18.4 12 14.9 4.8 18.4Z" fill="currentColor" stroke="none" />
+      {/* Eye outline */}
+      <path d="M2 12s3.6-6.2 10-6.2S22 12 22 12s-3.6 6.2-10 6.2S2 12 2 12Z" />
+      {/* Iris + pupil */}
+      <circle cx="12" cy="12" r="2.8" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }

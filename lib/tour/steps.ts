@@ -42,7 +42,7 @@ export const TOUR_STEPS: TourStep[] = [
     id: "dashboard",
     target: '[data-tour="dashboard"]',
     title: "Dashboard",
-    body: "Live per-validator tables: health, block height, peers, and client version, straight from the telemetry feed.",
+    body: "Live per-validator cards: health, block height, peers, and client version straight from the telemetry feed — click a card to expand the full detail.",
   },
   {
     id: "attestation",
@@ -78,6 +78,6 @@ export const TOUR_STEPS: TourStep[] = [
     id: "theme",
     target: '[data-tour="theme"]',
     title: "That's the tour",
-    body: "Toggle dark and light here. Replay this tour anytime from the ? button in the top bar.",
+    body: "Toggle dark and light with the eye — it blinks. Replay this tour anytime from the ? button in the top bar.",
   },
 ];

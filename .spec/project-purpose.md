@@ -20,9 +20,11 @@ The audience is technical, independent, and time-pressured. Lead with signal; ne
 
 Mainnet, Preprod, Preview — switchable in the nav. Thresholds (expected validator count, peer target) are parameterized per network in `lib/telemetry/networks.ts`.
 
+Cardano mainnet is shown as partner-chain context on the homepage (epoch + progress) via the Blockfrost API — budgeted at ~40k requests/month with a 15-minute cache. It is not a switchable network; Midnight remains the subject.
+
 ## In scope
 
-- Live network health (best/finalized block, finality gap, block time, per-node tables, alerts).
+- Live network health (best/finalized block, finality gap, block time, per-node cards, alerts).
 - Validator attestation (authorship share, finality lag, propagation, uptime, composite score) — as an **observability heuristic**, not cryptographic proof.
 - Report generation (Markdown / Notifi-safe plain text / JSON / CSV) from a frozen snapshot.
 - Discord webhook alerting (browser → webhook, edge-triggered).

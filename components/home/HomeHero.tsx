@@ -1,44 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { useTelemetry } from "@/providers/TelemetryProvider";
-import { NETWORKS } from "@/lib/telemetry/networks";
+import { NETWORKS, MIDNIGHT_SLOTS_PER_EPOCH } from "@/lib/telemetry/networks";
 import { formatBlockNumber, formatBlockTime } from "@/lib/format";
-import BlockPropagation, { BlockPulse } from "./BlockPropagation";
+import EpochCard from "./EpochCard";
+import CardanoEpoch from "./CardanoEpoch";
 
-const MAX_RING_NODES = 24;
-
+/**
+ * Homepage hero. The block-propagation scope animation is gone — the
+ * centerpiece is now the two chains' epochs side by side: Midnight's derived
+ * from the live telemetry feed, Cardano's from Blockfrost.
+ */
 export default function HomeHero() {
-  const { nodes, summary, recentBlocks, network, wsStatus } = useTelemetry();
+  const { nodes, summary, network, wsStatus } = useTelemetry();
+  const cfg = NETWORKS[network];
 
-  // Stable node ring: validators if present, otherwise the first N nodes.
-  const nodeNames = useMemo(() => {
-    const fno = nodes.filter((n) => n.isFno).map((n) => n.name);
-    const base = (fno.length ? fno : nodes.map((n) => n.name)).slice(0, MAX_RING_NODES);
-    return [...base].sort();
-  }, [nodes]);
-
-  const latest: BlockPulse | null = recentBlocks[0]
-    ? {
-        blockNumber: recentBlocks[0].blockNumber,
-        authorName: recentBlocks[0].authorName,
-        propagationMs: recentBlocks[0].propagationMs,
-      }
-    : summary
-    ? { blockNumber: summary.bestBlock, authorName: null, propagationMs: null }
-    : null;
-
-  const validatorsOnline = nodes.filter((n) => n.isFno).length;
-  const expected = NETWORKS[network].expectedValidators;
   const live = wsStatus === "live";
+  const validatorsOnline = nodes.filter((n) => n.isFno).length;
+  const expected = cfg.expectedValidators;
+  const bestBlock = summary && summary.bestBlock > 0 ? summary.bestBlock : null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col items-center">
       <div className="flex items-center gap-2 mb-5">
         <span className={`w-2 h-2 rounded-full ${live ? "bg-mn-ok animate-pulse" : "bg-mn-p3"}`} />
         <span className="font-mono text-[11px] uppercase tracking-widest text-mn-muted">
-          {NETWORKS[network].label} · {live ? "Live telemetry" : "Reconnecting"}
+          {cfg.label} · {live ? "Live telemetry" : "Reconnecting"}
         </span>
       </div>
 
@@ -46,33 +34,18 @@ export default function HomeHero() {
         Nighthawk
       </h1>
       <p className="text-mn-text-2 text-center mt-4 max-w-xl text-sm sm:text-base leading-relaxed">
-        General observability for the core Midnight blockchain network. Real-time block propagation
-        across the federated validator set — every pulse a finalized height rippling from its author
-        to the network.
+        General observability for the Midnight blockchain network and its Cardano partner chain —
+        live validator telemetry for the federated set, with Cardano epoch status alongside.
       </p>
 
-      {/* ── Animation centerpiece with live block readout overlay ────────── */}
-      <div className="relative w-full max-w-2xl aspect-square sm:aspect-[16/11] mt-6">
-        <BlockPropagation
-          nodeNames={nodeNames}
-          latest={latest}
-          blockTimeMs={summary?.avgBlockTime ?? null}
-        />
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-mn-muted">Best Block</span>
-          <span className="font-mono text-2xl sm:text-3xl font-semibold text-mn-text tabular-nums">
-            {summary ? formatBlockNumber(summary.bestBlock) : "—"}
-          </span>
-          {latest?.authorName && (
-            <span className="font-mono text-[11px] text-mn-accent-2 mt-1 max-w-[60%] truncate">
-              {latest.authorName}
-            </span>
-          )}
-        </div>
+      {/* ── Epoch status: Midnight (derived) + Cardano (Blockfrost) ────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mt-8">
+        <MidnightEpoch bestBlock={bestBlock} networkLabel={cfg.label} />
+        <CardanoEpoch />
       </div>
 
       {/* ── Live stat ticker ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mt-4">
         <HeroStat label="Validators" value={`${validatorsOnline}${expected ? `/${expected}` : ""}`} />
         <HeroStat
           label="Finalized"
@@ -98,6 +71,34 @@ export default function HomeHero() {
         </Link>
       </div>
     </div>
+  );
+}
+
+/**
+ * Midnight epoch, derived: AURA epochs are 300 slots and block height doubles
+ * as the slot counter (see content/docs/architecture/consensus-and-block-
+ * production.md), so the epoch costs zero extra API calls. Labeled as derived
+ * — it tracks block height, not an on-chain epoch announcement.
+ */
+function MidnightEpoch({
+  bestBlock,
+  networkLabel,
+}: {
+  bestBlock: number | null;
+  networkLabel: string;
+}) {
+  const epoch = bestBlock !== null ? Math.floor(bestBlock / MIDNIGHT_SLOTS_PER_EPOCH) : null;
+  const slot = bestBlock !== null ? bestBlock % MIDNIGHT_SLOTS_PER_EPOCH : null;
+
+  return (
+    <EpochCard
+      label={networkLabel}
+      source="derived · 300-slot epochs"
+      epoch={epoch}
+      progress={slot !== null ? slot / MIDNIGHT_SLOTS_PER_EPOCH : null}
+      progressLabel={slot !== null ? `Slot ${slot}/300` : "waiting for feed"}
+      footer={<span className="font-mono text-[10px] text-mn-muted">from block height</span>}
+    />
   );
 }
 

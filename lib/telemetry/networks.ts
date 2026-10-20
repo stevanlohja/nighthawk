@@ -58,5 +58,12 @@ export const NETWORKS: Record<NetworkId, NetworkConfig> = {
 
 export const NETWORK_IDS = Object.keys(NETWORKS) as NetworkId[];
 export const DEFAULT_NETWORK: NetworkId = "mainnet";
+
+/** AURA epoch length in slots — every Midnight network (see
+ * content/docs/architecture/consensus-and-block-production.md). Block height
+ * doubles as the slot counter (~one block per slot), so the current epoch is
+ * floor(best block / this) with no extra API call. */
+export const MIDNIGHT_SLOTS_PER_EPOCH = 300;
+
 export const FEED_URL = "wss://telemetry.shielded.tools/feed/";
 export const TELEMETRY_WEB_URL = "https://telemetry.shielded.tools";

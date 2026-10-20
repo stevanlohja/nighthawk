@@ -43,6 +43,9 @@ export default function AttestationView() {
     return () => clearInterval(id);
   }, []);
 
+  // One card expanded at a time; keyed by name (telemetry ids churn on reconnect).
+  const [openName, setOpenName] = useState<string | null>(null);
+
   const onlineValidators = nodes.filter((n) => n.isFno).length;
 
   const scoreCtx = useMemo(
@@ -129,7 +132,7 @@ export default function AttestationView() {
         </span>
       </div>
 
-      {/* Attestation table */}
+      {/* Attestation card grid */}
       <div className="bg-mn-surface border border-mn-border rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-mn-border flex items-center justify-between">
           <span className="text-sm font-semibold text-mn-muted uppercase tracking-wider">
@@ -144,37 +147,20 @@ export default function AttestationView() {
             Waiting for validator data…
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-mn-border">
-                  <Th left>Validator</Th>
-                  <Th left>Score</Th>
-                  <Th>Blocks</Th>
-                  <Th>Share</Th>
-                  <Th>Last Authored</Th>
-                  <Th>Fin. Lag</Th>
-                  <Th>Avg Prop.</Th>
-                  <Th>Peers</Th>
-                  <Th>Flaps</Th>
-                  <Th>Uptime</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ rec, score }, i) => (
-                  <AttestationRow
-                    key={rec.name}
-                    rec={rec}
-                    score={score}
-                    now={now}
-                    totalAttributed={totalAttributed}
-                    expectedShare={expectedShare}
-                    networkFinalized={summary?.finalizedBlock ?? 0}
-                    last={i === rows.length - 1}
-                  />
-                ))}
-              </tbody>
-            </table>
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {rows.map(({ rec, score }) => (
+              <AttestationCard
+                key={rec.name}
+                rec={rec}
+                score={score}
+                now={now}
+                totalAttributed={totalAttributed}
+                expectedShare={expectedShare}
+                networkFinalized={summary?.finalizedBlock ?? 0}
+                expanded={openName === rec.name}
+                onToggle={() => setOpenName((prev) => (prev === rec.name ? null : rec.name))}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -213,24 +199,15 @@ export default function AttestationView() {
   );
 }
 
-function Th({ children, left = false }: { children: React.ReactNode; left?: boolean }) {
-  return (
-    <th
-      className={`${left ? "text-left" : "text-right"} px-4 py-3 text-xs font-semibold text-mn-muted uppercase tracking-wider whitespace-nowrap`}
-    >
-      {children}
-    </th>
-  );
-}
-
-function AttestationRow({
+function AttestationCard({
   rec,
   score,
   now,
   totalAttributed,
   expectedShare,
   networkFinalized,
-  last,
+  expanded,
+  onToggle,
 }: {
   rec: AttestationRecord;
   score: AttestationScore;
@@ -238,7 +215,8 @@ function AttestationRow({
   totalAttributed: number;
   expectedShare: number | null;
   networkFinalized: number;
-  last: boolean;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const share = totalAttributed > 0 ? (rec.blocksAuthored / totalAttributed) * 100 : null;
   const lag =
@@ -250,67 +228,104 @@ function AttestationRow({
     share !== null && expectedShare !== null && totalAttributed >= 20 && share < expectedShare * 0.5;
 
   return (
-    <tr className={`${last ? "" : "border-b border-mn-border"} ${rec.online ? "" : "opacity-50"}`}>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span
-            className={`w-2 h-2 rounded-full shrink-0 ${rec.online ? "bg-mn-ok" : "bg-mn-muted"}`}
-            title={rec.online ? "Online" : "Offline"}
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      className={`text-left rounded-xl border p-4 transition-colors cursor-pointer ${
+        expanded
+          ? "border-mn-accent/40 bg-mn-surface-2"
+          : "border-mn-border bg-mn-bg hover:border-mn-accent/30 hover:bg-mn-surface-2"
+      } ${rec.online ? "" : "opacity-50"}`}
+    >
+      {/* Header: status dot + name + chevron */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 ${rec.online ? "bg-mn-ok" : "bg-mn-muted"}`}
+          title={rec.online ? "Online" : "Offline"}
+        />
+        <span className="font-mono text-xs text-mn-text truncate flex-1">{rec.name}</span>
+        <svg
+          aria-hidden="true"
+          className={`w-3.5 h-3.5 text-mn-muted shrink-0 transition-transform duration-150 ${expanded ? "rotate-180" : ""}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+        </svg>
+      </div>
+
+      {/* Score bar */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="flex-1 h-1.5 bg-mn-surface-2 rounded-full overflow-hidden min-w-16">
+          <div
+            className={`h-full rounded-full ${SCORE_BAR_COLORS[score.label]}`}
+            style={{ width: `${score.total}%` }}
           />
-          <span className="font-mono text-xs text-mn-text truncate">{rec.name}</span>
         </div>
-      </td>
-      <td className="px-4 py-3 w-44">
-        <div className="flex items-center gap-2.5">
-          <div className="flex-1 h-1.5 bg-mn-surface-2 rounded-full overflow-hidden min-w-16">
-            <div
-              className={`h-full rounded-full ${SCORE_BAR_COLORS[score.label]}`}
-              style={{ width: `${score.total}%` }}
-            />
+        <span className={`font-mono text-xs font-semibold w-7 text-right ${SCORE_COLORS[score.label]}`}>
+          {score.total}
+        </span>
+      </div>
+
+      {/* Headline stats */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        <MetricCell label="Blocks">{rec.blocksAuthored.toLocaleString()}</MetricCell>
+        <MetricCell label="Share">
+          {share !== null ? (
+            <span className={shareBehind ? "text-mn-p3" : ""}>{share.toFixed(1)}%</span>
+          ) : (
+            "—"
+          )}
+        </MetricCell>
+      </div>
+
+      {/* Expanded: session detail + score breakdown */}
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-mn-border animate-[fadeSlide_0.15s_ease]">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            <MetricCell label="Last Authored">
+              {rec.lastAuthoredBlock ? formatAgo(rec.lastAuthoredAt, now) : "—"}
+            </MetricCell>
+            <MetricCell label="Fin. Lag">
+              {lag !== null ? (
+                <span className={lag > 10 ? "text-mn-p1" : lag > 5 ? "text-mn-p3" : "text-mn-ok"}>{lag}</span>
+              ) : (
+                "—"
+              )}
+            </MetricCell>
+            <MetricCell label="Avg Prop.">{prop !== null ? `${Math.round(prop)}ms` : "—"}</MetricCell>
+            <MetricCell label="Peers">{rec.online ? rec.peers : "—"}</MetricCell>
+            <MetricCell label="Flaps">
+              <span className={rec.disconnects > 0 ? "text-mn-p3" : ""}>{rec.disconnects}</span>
+            </MetricCell>
+            <MetricCell label="Uptime">{rec.online ? formatUptime(rec.startupTime, now) : "offline"}</MetricCell>
           </div>
-          <span className={`font-mono text-xs font-semibold w-7 text-right ${SCORE_COLORS[score.label]}`}>
-            {score.total}
-          </span>
+          <div className="mt-2 pt-2 border-t border-mn-border flex flex-col gap-1.5">
+            <ScoreRow label="Presence" value={score.presence} />
+            <ScoreRow label="Authorship" value={score.authorship} />
+            <ScoreRow label="Finality" value={score.finality} />
+            <ScoreRow label="Peer Health" value={score.peerHealth} />
+          </div>
         </div>
-      </td>
-      <Td>{rec.blocksAuthored.toLocaleString()}</Td>
-      <Td>
-        {share !== null ? (
-          <span className={shareBehind ? "text-mn-p3" : ""}>{share.toFixed(1)}%</span>
-        ) : (
-          "—"
-        )}
-      </Td>
-      <Td>
-        {rec.lastAuthoredBlock ? (
-          <span title={`#${rec.lastAuthoredBlock.toLocaleString()}`}>
-            {formatAgo(rec.lastAuthoredAt, now)}
-          </span>
-        ) : (
-          "—"
-        )}
-      </Td>
-      <Td>
-        {lag !== null ? (
-          <span className={lag > 10 ? "text-mn-p1" : lag > 5 ? "text-mn-p3" : "text-mn-ok"}>{lag}</span>
-        ) : (
-          "—"
-        )}
-      </Td>
-      <Td>{prop !== null ? `${Math.round(prop)}ms` : "—"}</Td>
-      <Td>{rec.online ? rec.peers : "—"}</Td>
-      <Td>
-        <span className={rec.disconnects > 0 ? "text-mn-p3" : ""}>{rec.disconnects}</span>
-      </Td>
-      <Td>{rec.online ? formatUptime(rec.startupTime, now) : "offline"}</Td>
-    </tr>
+      )}
+    </button>
   );
 }
 
-function Td({ children }: { children: React.ReactNode }) {
+function MetricCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <td className="px-4 py-3 font-mono text-xs text-right text-mn-text tabular-nums whitespace-nowrap">
-      {children}
-    </td>
+    <div className="min-w-0">
+      <p className="text-[10px] font-sans uppercase tracking-wider text-mn-muted">{label}</p>
+      <p className="mt-0.5 font-mono text-xs text-mn-text tabular-nums truncate">{children}</p>
+    </div>
+  );
+}
+
+function ScoreRow({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[10px] font-sans uppercase tracking-wider text-mn-muted">{label}</span>
+      <span className="font-mono text-xs text-mn-text">{value !== null ? value : "—"}</span>
+    </div>
   );
 }

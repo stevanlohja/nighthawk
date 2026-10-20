@@ -4,7 +4,7 @@ Welcome, Assistant. This file is the always-loaded operational guide for the **M
 
 > **CRITICAL:** The complete specification — purpose, architecture, standards, and user stories — lives in [`.spec/`](.spec/). **Read the relevant `.spec/` file(s) before writing code or proposing architecture changes.** Use the router below to pull in only what the task needs (don't load the whole directory).
 
-This is a **100% client-side** Next.js app that visualizes the live Substrate telemetry feed. There is no backend, database, or API key.
+This is a **100% client-side** Next.js app that visualizes the live Substrate telemetry feed, plus a single cached Blockfrost call for Cardano epoch context. There is no backend or database; the only embedded credential is the **public-by-design, read-only Blockfrost project id** (`BLOCKFROST_API_MAINNET` — see constraint 3).
 
 ---
 
@@ -42,7 +42,7 @@ These are the load-bearing rules of this codebase. Violating them breaks the arc
 
 1. **`lib/` is pure TypeScript — ZERO React imports.** Domain logic lives in `lib/` (framework-free, unit-testable). `providers/` bind it to React, `components/` render it, `app/` only routes. Never put logic in a route or a `<Component>`.
 2. **Theme tokens only.** Components reference `mn-*` Tailwind utilities (which resolve through `data-theme` CSS variables). **Never hardcode colors** — every component must work in dark and light.
-3. **No backend, no DB, no secrets.** Everything runs in the browser against a Substrate telemetry WebSocket feed — default `wss://telemetry.shielded.tools/feed/`, but **user-configurable with ordered failover** (see `lib/telemetry/endpoints.ts` + the provider's rotation loop). Persist user state in `localStorage`; **feature-detect** browser APIs (e.g. `wakeLock`, `requestFullscreen`).
+3. **No backend, no DB.** Everything runs in the browser against a Substrate telemetry WebSocket feed — default `wss://telemetry.shielded.tools/feed/`, but **user-configurable with ordered failover** (see `lib/telemetry/endpoints.ts` + the provider's rotation loop). Persist user state in `localStorage`; **feature-detect** browser APIs (e.g. `wakeLock`, `requestFullscreen`). The one external API is **Cardano via Blockfrost** (`lib/cardano/blockfrost.ts`, homepage epoch card only): the project id `BLOCKFROST_API_MAINNET` comes from `.env` locally and a GitHub Actions secret for Pages, and is **inlined into the static bundle — public by design** (no server to proxy it). Keep that Blockfrost project read-only and the spend inside the ~40k/month budget: one cached endpoint (`GET /blocks/latest`, 15-minute `localStorage` TTL, no retry loops). Never add an uncached Blockfrost call.
 4. **One pure reducer owns telemetry state** ([`lib/state/telemetry-reducer.ts`](lib/state/telemetry-reducer.ts)): each WebSocket message → one event batch → one render. Attestation is keyed by node **name** (telemetry ids churn on reconnect).
 5. **No `setState` directly in a `useEffect` body** (the `react-hooks/set-state-in-effect` rule is enforced). Defer to a timer/`requestAnimationFrame`/event callback.
 6. **Turbopack is the default bundler.** MDX remark plugins in [`next.config.ts`](next.config.ts) must be passed as **string paths**, never function references (Turbopack can't serialize functions across the loader boundary).

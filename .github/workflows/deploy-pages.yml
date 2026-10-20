@@ -40,6 +40,10 @@ jobs:
           # (must match the repo name — GitHub Pages serves a project site at
           # /<repo>/, and a stale value 404s every JS/CSS/font request.)
           NEXT_PUBLIC_BASE_PATH: /nighthawk
+          # Cardano epoch card (homepage): Blockfrost project id, inlined into
+          # the static bundle by next.config.ts env. Public by design; spend is
+          # guarded by the 15-min localStorage cache in lib/cardano/blockfrost.ts.
+          BLOCKFROST_API_MAINNET: ${{ secrets.BLOCKFROST_API_MAINNET }}
         run: pnpm build
 
       - name: Upload Pages artifact

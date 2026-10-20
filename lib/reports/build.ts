@@ -1,6 +1,6 @@
 import { NodeState, NetworkSummary, WsStatus } from "@/lib/telemetry/types";
 import { NETWORKS, NetworkId } from "@/lib/telemetry/networks";
-import { evaluateHealth, buildAlerts } from "@/lib/health/health";
+import { evaluateHealth, buildAlerts, peerSeverity } from "@/lib/health/health";
 import { AttestationRecord, avgPropagation } from "@/lib/attestation/types";
 import { scoreRecord } from "@/lib/attestation/score";
 import { NODE_TYPE_LABELS } from "@/lib/telemetry/classify";
@@ -25,9 +25,10 @@ export interface ReportInput {
   sections: ReportSection[];
 }
 
-function validatorStatus(peers: number, expectedPeers: number | null): ReportValidatorRow["status"] {
-  if (peers === 0) return "isolated";
-  if (expectedPeers !== null && peers < expectedPeers) return "degraded";
+function validatorStatus(peers: number, network: NetworkId): ReportValidatorRow["status"] {
+  const sev = peerSeverity(peers, network);
+  if (sev === "critical") return "isolated";
+  if (sev === "warning") return "degraded";
   return "healthy";
 }
 
@@ -64,7 +65,7 @@ export function buildReport(input: ReportInput): ReportModel {
       finalityGap: n.bestBlock > 0 && n.finalizedBlock > 0 ? n.bestBlock - n.finalizedBlock : null,
       version: n.version,
       city: n.city,
-      status: validatorStatus(n.peers, cfg.expectedPeers),
+      status: validatorStatus(n.peers, network),
     }));
 
   const scoreCtx = {

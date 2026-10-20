@@ -36,6 +36,10 @@
   --mn-p3:        #d29922;                    /* medium / warning */
   --mn-ok:        #3fb950;                    /* healthy */
   --mn-escalate:  #a855f7;                    /* escalate */
+
+  /* Ember iris for the theme-eye toggle — brand chrome, deliberately NOT a
+     severity colour (the p0-p2 ramp stays semantic). */
+  --mn-iris:      #ff7a1a;
 }
 
 [data-theme="light"] {
@@ -162,8 +166,32 @@ body {
   animation: bellWiggle 0.9s ease-in-out;
   transform-origin: top center;
 }
+
+/* ── Theme eye — ember iris glow (dark) + blink on toggle ────────────────── */
+
+.theme-eye-glow {
+  filter: drop-shadow(0 0 2px var(--mn-iris, #ff7a1a)) drop-shadow(0 0 5px var(--mn-iris, #ff7a1a));
+  animation: irisPulse 3.2s ease-in-out infinite;
+}
+@keyframes irisPulse {
+  0%, 100% { opacity: 0.8; }
+  50%      { opacity: 1; }
+}
+
+/* The lid: squeezes the eye shut and reopens — the theme swaps mid-blink. */
+@keyframes eyeBlink {
+  0%, 100% { transform: scaleY(1); }
+  42%, 58% { transform: scaleY(0.05); }
+}
+.eye-blink {
+  animation: eyeBlink 0.32s ease-in-out;
+  transform-origin: center;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bell-wiggle { animation: none; }
+  .theme-eye-glow { animation: none; }
+  .eye-blink { animation: none; }
 }
 
 /* ── Print: used by the report print view ──────────────────────────────── */

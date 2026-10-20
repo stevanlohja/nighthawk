@@ -11,6 +11,7 @@ import {
 } from "@/lib/diagnostic/tree-data";
 import { useTelemetry } from "@/providers/TelemetryProvider";
 import { NodeState, NetworkSummary } from "@/lib/telemetry/types";
+import { peerSeverity, Severity } from "@/lib/health/health";
 
 interface TreeState {
   current: NodeKey;
@@ -19,6 +20,17 @@ interface TreeState {
 }
 
 const INITIAL: TreeState = { current: "start", history: [], crumbs: [] };
+
+const SEV_BG: Record<Severity, string> = {
+  ok: "bg-mn-ok",
+  warning: "bg-mn-p3",
+  critical: "bg-mn-p1",
+};
+const SEV_TEXT: Record<Severity, string> = {
+  ok: "text-mn-ok",
+  warning: "text-mn-p3",
+  critical: "text-mn-p1",
+};
 
 export default function DiagnosticTree() {
   const [state, setState] = useState<TreeState>(INITIAL);
@@ -261,6 +273,7 @@ function NetworkSummaryPanel({ summary }: { summary: NetworkSummary | null }) {
 }
 
 function ValidatorPresencePanel({ fnoNodes }: { fnoNodes: NodeState[] }) {
+  const { network } = useTelemetry();
   const count = fnoNodes.length;
   const countCls =
     count >= 10 ? "text-mn-ok" : count >= 7 ? "text-mn-p3" : "text-mn-p1";
@@ -276,8 +289,7 @@ function ValidatorPresencePanel({ fnoNodes }: { fnoNodes: NodeState[] }) {
       ) : (
         <div className="divide-y divide-mn-border">
           {fnoNodes.map((n) => {
-            const dot =
-              n.peers === 0 ? "bg-mn-p1" : n.peers < 17 ? "bg-mn-p3" : "bg-mn-ok";
+            const dot = SEV_BG[peerSeverity(n.peers, network)];
             return (
               <div key={n.id} className="flex items-center gap-2.5 px-4 py-2">
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
@@ -327,8 +339,9 @@ function AllNodesPanel({ nodes }: { nodes: NodeState[] }) {
 }
 
 function NodeRow({ node, highlight }: { node: NodeState; highlight: boolean }) {
-  const dot =
-    node.peers === 0 ? "bg-mn-p1" : node.peers < 17 ? "bg-mn-p3" : "bg-mn-ok";
+  const { network } = useTelemetry();
+  const sev = peerSeverity(node.peers, network);
+  const dot = SEV_BG[sev];
   return (
     <div
       className={`flex items-center justify-between px-4 py-1.5 border-b border-mn-border last:border-0 ${
@@ -341,11 +354,7 @@ function NodeRow({ node, highlight }: { node: NodeState; highlight: boolean }) {
       </div>
       <span
         className={`text-xs font-mono ${
-          node.peers === 0
-            ? "text-mn-p1"
-            : node.peers < 17
-            ? "text-mn-p3"
-            : "text-mn-muted"
+          sev === "critical" ? "text-mn-p1" : sev === "warning" ? "text-mn-p3" : "text-mn-muted"
         }`}
       >
         {node.peers}p
@@ -355,6 +364,7 @@ function NodeRow({ node, highlight }: { node: NodeState; highlight: boolean }) {
 }
 
 function PeerCountPanel({ fnoNodes }: { fnoNodes: NodeState[] }) {
+  const { network } = useTelemetry();
   if (fnoNodes.length === 0) {
     return (
       <p className="px-4 py-3 text-xs text-mn-muted font-mono">
@@ -368,15 +378,14 @@ function PeerCountPanel({ fnoNodes }: { fnoNodes: NodeState[] }) {
   return (
     <div className="divide-y divide-mn-border">
       {sorted.map((n) => {
-        const cls =
-          n.peers === 0 ? "text-mn-p1" : n.peers < 17 ? "text-mn-p3" : "text-mn-ok";
-        const dot =
-          n.peers === 0 ? "bg-mn-p1" : n.peers < 17 ? "bg-mn-p3" : "bg-mn-ok";
+        const sev = peerSeverity(n.peers, network);
+        const cls = SEV_TEXT[sev];
+        const dot = SEV_BG[sev];
         const label =
-          n.peers === 0
+          sev === "critical"
             ? "ISOLATED"
-            : n.peers < 17
-            ? `${n.peers} peers — low`
+            : sev === "warning"
+            ? `${n.peers} peer — low`
             : `${n.peers} peers`;
         return (
           <div key={n.id} className="flex items-center justify-between px-4 py-2">

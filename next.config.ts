@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
   trailingSlash: true, // emit out/<route>/index.html — Pages-friendly routing
   images: { unoptimized: true }, // required by export if next/image is ever used
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
+  // Cardano context (homepage epoch card): the Blockfrost project id is
+  // inlined into the static bundle at build time. GitHub Pages has no server
+  // to proxy the call, so the key is PUBLIC by design — read-only,
+  // quota-capped, and budgeted (~40k of the 50k free req/mo) by the 15-minute
+  // localStorage cache in lib/cardano/blockfrost.ts. Sourced from .env
+  // locally and the BLOCKFROST_API_MAINNET Actions secret in CI.
+  env: {
+    BLOCKFROST_API_MAINNET: process.env.BLOCKFROST_API_MAINNET ?? "",
+  },
 };
 
 // Remark plugins are passed as string paths (not imports): Next 16 defaults to

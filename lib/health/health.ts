@@ -53,6 +53,20 @@ function validatorSeverity(online: number, expected: number | null): Severity {
   return "ok";
 }
 
+/**
+ * Peer-count severity for a node, network-aware. Zero peers is isolation
+ * (critical) on any network; on mainnet ONLY, a single peer also warns —
+ * "1 or less" is near-isolation. Sitting under the healthy peer target
+ * (`expectedPeers`, 17 on mainnet) is deliberately NOT flagged: mainnet
+ * routinely reports fewer peers than the target, so the warning is reserved
+ * for nodes about to drop off the mesh entirely.
+ */
+export function peerSeverity(peers: number, network: NetworkId): Severity {
+  if (peers === 0) return "critical";
+  if (network === "mainnet" && peers === 1) return "warning";
+  return "ok";
+}
+
 export function evaluateHealth(
   nodes: NodeState[],
   summary: NetworkSummary | null,
@@ -78,16 +92,13 @@ export function evaluateHealth(
     else if (gap >= FINALITY_GAP_WARNING) finalityGap = "warning";
   }
 
-  // Peer count (worst FNO) — only judged on networks with a peer target
+  // Peer count (worst FNO) — judged only on networks with a peer target;
+  // the mainnet ≤1-peer warning policy lives in peerSeverity.
   let peerCount: Severity = "ok";
   if (cfg.expectedPeers !== null) {
     for (const node of fnoNodes) {
-      if (node.peers === 0) {
-        peerCount = "critical";
-        break;
-      } else if (node.peers < cfg.expectedPeers) {
-        peerCount = worstSeverity(peerCount, "warning");
-      }
+      peerCount = worstSeverity(peerCount, peerSeverity(node.peers, network));
+      if (peerCount === "critical") break;
     }
   }
 
@@ -146,18 +157,19 @@ export function buildAlerts(
 
   if (cfg.expectedPeers !== null) {
     for (const node of fnoNodes) {
-      if (node.peers === 0) {
+      const sev = peerSeverity(node.peers, network);
+      if (sev === "critical") {
         alerts.push({
           id: `peers-zero-${node.id}`,
           severity: "critical",
           message: `${node.name}: 0 peers — validator isolated from network`,
           runbook: "runbook-03-isolation",
         });
-      } else if (node.peers < cfg.expectedPeers) {
+      } else if (sev === "warning") {
         alerts.push({
           id: `peers-low-${node.id}`,
           severity: "warning",
-          message: `${node.name}: ${node.peers} peers (expected ${cfg.expectedPeers})`,
+          message: `${node.name}: ${node.peers} peer — near isolation (mainnet warns at ≤1; healthy target ${cfg.expectedPeers})`,
           runbook: "runbook-02-peers",
         });
       }
